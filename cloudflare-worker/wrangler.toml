@@ -1,0 +1,15 @@
+name = "vertex-mail-inbound"
+main = "inbound-email-worker.js"
+compatibility_date = "2024-09-01"
+
+# Secrets (set with `wrangler secret put NAME`, not committed here):
+#   INBOUND_WEBHOOK_SECRET  — must match the app's INBOUND_WEBHOOK_SECRET
+#   VERTEX_INBOUND_URL      — e.g. https://mail.yourco.com/api/inbound
+
+# Email Routing bindings are configured per-zone in the Cloudflare
+# dashboard (or via API — see the domain-verify flow in
+# src/app/api/admin/domains/[id]/verify/route.ts), not in this file.
+# Each verified Vertex Mail domain gets a catch-all route:
+#   Match: *@{domain}   Action: Send to Worker   Worker: vertex-mail-inbound
+# Adding a new domain therefore never requires editing or redeploying
+# this Worker — only adding a route on the new domain's zone.
