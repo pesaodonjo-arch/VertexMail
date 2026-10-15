@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { cleanSenderName } from "@/lib/sender-name";
 
 export async function GET(req: NextRequest) {
   const supabase = createClient();
@@ -48,7 +49,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
-  const { domain_id, local_part, display_name, temporary_password, for_self } = await req.json();
+  const { domain_id, local_part, display_name: rawDisplayName, temporary_password, for_self } = await req.json();
+
+  const cleanedName = cleanSenderName(rawDisplayName);
+  if (!cleanedName.ok) return NextResponse.json({ error: "invalid_display_name", message: cleanedName.message }, { status: 400 });
+  const display_name = cleanedName.value;
 
   if (!domain_id || !local_part || !/^[a-z0-9._-]+$/i.test(local_part)) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });

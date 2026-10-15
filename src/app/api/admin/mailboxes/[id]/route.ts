@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { randomBytes } from "crypto";
+import { cleanSenderName } from "@/lib/sender-name";
 
+// PATCH { display_name: "Fred Mark" | "" } — set/clear the sender name shown
+// to recipients next to the address ("" clears it, falling back to the plain address).
 // PATCH { status: "suspended" | "active" } — suspend/reactivate a mailbox.
 // PATCH { reset_password: true } — issue a new temporary password (the
 // owner forgot theirs; there's no self-serve "forgot password" email flow
@@ -13,6 +16,23 @@ import { randomBytes } from "crypto";
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createClient();
   const body = await req.json();
+
+  if ("display_name" in body) {
+    const cleaned = cleanSenderName(body.display_name);
+    if (!cleaned.ok) return NextResponse.json({ error: "invalid_display_name", message: cleaned.message }, { status: 400 });
+
+    // Session client: the mailboxes_update RLS policy decides whether this
+    // caller may edit this mailbox (platform admin or that domain's admin).
+    const { data: mailbox, error } = await supabase
+      .from("mailboxes")
+      .update({ display_name: cleaned.value })
+      .eq("id", params.id)
+      .select("id, display_name")
+      .single();
+
+    if (error || !mailbox) return NextResponse.json({ error: error?.message ?? "not_found" }, { status: 403 });
+    return NextResponse.json({ mailbox });
+  }
 
   if (body.reset_password) {
     const { data: mailbox, error } = await supabase

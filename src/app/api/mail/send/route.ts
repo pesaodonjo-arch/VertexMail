@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getEmailProvider } from "@/lib/email-provider";
+import { formatFromName } from "@/lib/sender-name";
 import { resolveDomainProvider } from "@/lib/email-provider/resolve-for-domain";
+import { ATTACHMENT_BUCKET, MAX_ATTACHMENTS, MAX_TOTAL_BYTES, isBlockedFileName } from "@/lib/attachments";
+
+// Reading attachments back from storage and handing them to the provider can
+// take a while for big files.
+export const maxDuration = 60;
 
 interface ComposeBody {
   to: string[];
@@ -13,6 +19,8 @@ interface ComposeBody {
   html?: string;
   inReplyToThreadId?: string; // reply within an existing thread
   saveAsDraft?: boolean;
+  // Files the browser already uploaded to storage (see ComposeForm): we only get references.
+  attachments?: { fileName: string; contentType: string; sizeBytes: number; path: string }[];
 }
 
 // The web/mobile compose UI hits this, not /api/v1/send. It uses the
@@ -37,6 +45,49 @@ export async function POST(req: NextRequest) {
   }
 
   const body: ComposeBody = await req.json();
+  const attachmentRefs = body.attachments ?? [];
+  if (attachmentRefs.length > MAX_ATTACHMENTS) {
+    return NextResponse.json({ error: "too_many_attachments", message: `Up to ${MAX_ATTACHMENTS} attachments per message.` }, { status: 400 });
+  }
+  if (body.saveAsDraft && attachmentRefs.length > 0) {
+    return NextResponse.json(
+      { error: "draft_attachments_unsupported", message: "Drafts can't keep attachments yet." },
+      { status: 400 }
+    );
+  }
+
+  // Load each uploaded file from storage. A path must sit in THIS user's own
+  // folder, otherwise someone could ask us to email another person's file.
+  const loaded: { fileName: string; contentType: string; sizeBytes: number; path: string; contentBase64: string }[] = [];
+  if (attachmentRefs.length > 0) {
+    const admin = createAdminClient();
+    let total = 0;
+    for (const ref of attachmentRefs) {
+      if (!ref?.path || !ref.path.startsWith(`${user.id}/`) || ref.path.includes("..") || !ref.fileName) {
+        return NextResponse.json({ error: "invalid_attachment", message: "One of the attachments is invalid." }, { status: 400 });
+      }
+      if (isBlockedFileName(ref.fileName)) {
+        return NextResponse.json({ error: "blocked_type", message: `${ref.fileName} can't be sent (blocked file type).` }, { status: 400 });
+      }
+      const { data: blob, error: dlErr } = await admin.storage.from(ATTACHMENT_BUCKET).download(ref.path);
+      if (dlErr || !blob) {
+        return NextResponse.json({ error: "attachment_missing", message: `Couldn't read ${ref.fileName}. Remove it and attach it again.` }, { status: 400 });
+      }
+      const bytes = Buffer.from(await blob.arrayBuffer());
+      total += bytes.length;
+      if (total > MAX_TOTAL_BYTES) {
+        return NextResponse.json({ error: "attachments_too_large", message: "Attachments are too large." }, { status: 413 });
+      }
+      loaded.push({
+        fileName: ref.fileName,
+        contentType: ref.contentType || "application/octet-stream",
+        sizeBytes: bytes.length,
+        path: ref.path,
+        contentBase64: bytes.toString("base64"),
+      });
+    }
+  }
+
   const fromAddress = `${mailbox.local_part}@${(mailbox as any).domains.domain_name}`;
 
   let threadId: string | null = null;
@@ -109,7 +160,7 @@ export async function POST(req: NextRequest) {
     const provider = getEmailProvider(override);
     const result = await provider.send({
       from: fromAddress,
-      fromName: mailbox.display_name ?? undefined,
+      fromName: formatFromName(mailbox.display_name),
       to: body.to,
       cc: body.cc,
       bcc: body.bcc,
@@ -118,6 +169,11 @@ export async function POST(req: NextRequest) {
       html: body.html,
       inReplyTo,
       headers: references ? { References: references } : undefined,
+      attachments: loaded.map((a) => ({
+        fileName: a.fileName,
+        contentType: a.contentType,
+        contentBase64: a.contentBase64,
+      })),
     });
 
     const { data: message, error } = await supabase
@@ -140,6 +196,21 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+    // Keep a record of what was attached (pointing at the stored file) so the
+    // sent message shows its files in the thread and they can be downloaded.
+    if (message && loaded.length > 0) {
+      await supabase.from("attachments").insert(
+        loaded.map((a) => ({
+          message_id: message.id,
+          mailbox_id: mailbox.id,
+          file_name: a.fileName,
+          content_type: a.contentType,
+          size_bytes: a.sizeBytes,
+          storage_path: a.path,
+        }))
+      );
+    }
     return NextResponse.json({ status: "sent", message_id: message?.id });
   } catch (err) {
     return NextResponse.json({ error: "provider_error", message: (err as Error).message }, { status: 502 });
