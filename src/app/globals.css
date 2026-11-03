@@ -6,7 +6,92 @@
 
 :root {
   color-scheme: light;
+  --ink-50: 247 248 251;
+  --ink-100: 238 240 246;
+  --ink-200: 228 231 238;
+  --ink-300: 203 208 220;
+  --ink-400: 154 161 180;
+  --ink-500: 74 81 100;
+  --ink-600: 47 53 72;
+  --ink-700: 28 33 51;
+  --ink-800: 13 17 32;
+  --ink-900: 8 11 24;
+  --ink-950: 11 15 31;
+  --brand-50: 238 242 255;
+  --brand-100: 224 231 255;
+  --brand-200: 199 210 254;
+  --brand-300: 165 180 252;
+  --brand-400: 129 140 248;
+  --brand-500: 79 95 224;
+  --brand-600: 41 82 227;
+  --brand-700: 33 64 184;
+  --brand-800: 27 51 145;
+  --brand-900: 24 43 114;
+  --surface: 255 255 255;
 }
+
+/* Dark theme: the ink scale is flipped (50 = page background, 900 = headline text). */
+.dark {
+  color-scheme: dark;
+  --ink-50: 16 21 42;
+  --ink-100: 27 34 61;
+  --ink-200: 42 50 82;
+  --ink-300: 62 72 108;
+  --ink-400: 138 147 173;
+  --ink-500: 167 174 195;
+  --ink-600: 196 202 219;
+  --ink-700: 217 221 234;
+  --ink-800: 236 239 247;
+  --ink-900: 247 248 252;
+  --brand-50: 24 31 71;
+  --brand-100: 31 41 94;
+  --brand-200: 44 58 128;
+  --brand-300: 124 141 240;
+  --brand-400: 147 162 246;
+  --brand-500: 111 130 246;
+  --brand-600: 74 108 247;
+  --brand-700: 163 180 255;
+  --brand-800: 195 206 255;
+  --brand-900: 221 227 255;
+  --surface: 23 29 53;
+}
+
+/* Always-dark chrome (admin sidebar, toasts): puts the original light-theme
+   palette back inside it, so its hand-picked light-on-dark text keeps working. */
+.vx-keep {
+  --ink-50: 247 248 251;
+  --ink-100: 238 240 246;
+  --ink-200: 228 231 238;
+  --ink-300: 203 208 220;
+  --ink-400: 154 161 180;
+  --ink-500: 74 81 100;
+  --ink-600: 47 53 72;
+  --ink-700: 28 33 51;
+  --ink-800: 13 17 32;
+  --ink-900: 8 11 24;
+  --ink-950: 11 15 31;
+  --brand-50: 238 242 255;
+  --brand-100: 224 231 255;
+  --brand-200: 199 210 254;
+  --brand-300: 165 180 252;
+  --brand-400: 129 140 248;
+  --brand-500: 79 95 224;
+  --brand-600: 41 82 227;
+  --brand-700: 33 64 184;
+  --brand-800: 27 51 145;
+  --brand-900: 24 43 114;
+  --surface: 255 255 255;
+}
+
+/* `bg-white` is used for every card/panel surface; in dark mode it becomes the surface colour.
+   Inside .vx-keep it stays white (e.g. the Sign out button). */
+.dark .bg-white { background-color: rgb(var(--surface)); }
+.dark .bg-white\/95 { background-color: rgb(var(--surface) / 0.95); }
+.dark .border-white { border-color: rgb(var(--surface)); }
+.dark .vx-keep .bg-white { background-color: #fff; }
+/* Links/numbers in primary blue need to be lighter on dark backgrounds. */
+.dark .text-brand-600 { color: rgb(var(--brand-300)); }
+.dark * { --tw-ring-offset-color: rgb(var(--surface)); }
 
 html, body {
   height: 100%;
@@ -33,3 +118,26 @@ body {
   to { opacity: 1; transform: none; }
 }
 .vx-toast { animation: vx-toast-in 180ms ease-out; }
+
+
+/* Admin tables: on phones every row becomes a tidy card (labels come from data-label). */
+@media (max-width: 767px) {
+  .vx-table, .vx-table tbody, .vx-table tr, .vx-table td { display: block; width: 100%; }
+  .vx-table thead { display: none; }
+  .vx-table tbody tr { padding: 0.75rem 1rem; border-bottom: 1px solid theme('colors.ink.100'); }
+  .vx-table tbody tr:last-child { border-bottom: 0; }
+  .vx-table td {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    padding: 0.25rem 0; text-align: right; min-width: 0; word-break: break-word;
+  }
+  .vx-table td[data-label]::before {
+    content: attr(data-label); flex-shrink: 0; text-align: left;
+    font-size: 0.75rem; font-weight: 500; color: theme('colors.ink.500');
+  }
+  .vx-table td.vx-title { display: block; text-align: left; font-size: 0.95rem; padding-bottom: 0.35rem; word-break: break-all; }
+  .vx-table td.vx-actions { display: block; text-align: left; padding-top: 0.6rem; }
+  .vx-table td.vx-actions > div { justify-content: flex-start; flex-wrap: wrap; }
+  .vx-table tr.vx-panel { padding: 0; }
+  .vx-table td.vx-full { display: block; text-align: left; padding: 0; }
+  .vx-table td.vx-empty { display: block; text-align: center; }
+}

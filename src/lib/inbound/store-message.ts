@@ -1,5 +1,7 @@
+import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { extractEmail, hasReplyPrefix, normalizeSubject } from "@/lib/reply";
+import { fcmConfigured, sendFcm } from "@/lib/fcm";
 
 export interface NormalizedInboundEmail {
   to: string; // full recipient address, e.g. admin1@darasa.site
@@ -123,25 +125,39 @@ export async function storeInboundMessage(
     .single();
 
   for (const att of payload.attachments ?? []) {
-    // In production: upload att.contentBase64 to Supabase Storage under
-    // `mailbox/{mailbox.id}/{message.id}/{fileName}` and store the path.
-    const storagePath = `mailbox/${mailbox.id}/${message!.id}/${att.fileName}`;
+    // Save the file's bytes in the private "attachments" bucket (see
+    // supabase/migration_007_attachment_storage.sql). The object key is a random
+    // id, not the file name, so odd characters in names can't break storage;
+    // the real name lives in the attachments row.
+    let storagePath = "";
+    if (att.contentBase64) {
+      const path = `mailbox/${mailbox.id}/${message!.id}/${randomUUID()}`;
+      const { error: upErr } = await db.storage
+        .from("attachments")
+        .upload(path, Buffer.from(att.contentBase64, "base64"), {
+          contentType: att.contentType || "application/octet-stream",
+          upsert: false,
+        });
+      if (upErr) console.error("[attachments] upload failed", att.fileName, upErr.message);
+      else storagePath = path;
+    }
     await db.from("attachments").insert({
       message_id: message!.id,
       mailbox_id: mailbox.id,
       file_name: att.fileName,
       content_type: att.contentType,
       size_bytes: att.sizeBytes,
-      storage_path: storagePath,
+      storage_path: storagePath, // empty = metadata only, file wasn't saved
     });
   }
 
-  // Fire a push notification (best-effort — never fail the webhook on this).
+  // Fire a push notification to the mailbox's Android devices (best-effort —
+  // never fail the webhook on this). Awaited on purpose: on Vercel the
+  // function may be frozen as soon as the response is sent.
   try {
-    await db.from("push_subscriptions").select("*").eq("mailbox_id", mailbox.id);
-    // for (const sub of subs ?? []) await sendWebPush(sub, { title: payload.from, body: payload.subject });
-  } catch {
-    /* notification failures never bounce the mail */
+    await notifyAndroidDevices(db, mailbox.id, payload, threadId);
+  } catch (e) {
+    console.error("[push] notify failed", e);
   }
 
   return { status: 200, body: { status: "stored", message_id: message?.id } };
@@ -178,4 +194,44 @@ async function findThreadBySubjectAndParticipant(
     if (involved && involved.length > 0) return c.id;
   }
   return null;
+}
+
+async function notifyAndroidDevices(
+  db: SupabaseClient,
+  mailboxId: string,
+  payload: NormalizedInboundEmail,
+  threadId: string | null
+): Promise<void> {
+  if (!fcmConfigured()) return;
+
+  // Respect the mailbox's "notify_push" setting (defaults to on when no row exists).
+  const { data: settings } = await db
+    .from("mailbox_settings")
+    .select("notify_push")
+    .eq("mailbox_id", mailboxId)
+    .maybeSingle();
+  if (settings && settings.notify_push === false) return;
+
+  const { data: subs } = await db
+    .from("push_subscriptions")
+    .select("endpoint")
+    .eq("mailbox_id", mailboxId)
+    .eq("platform", "android");
+  const tokens = (subs ?? []).map((s) => s.endpoint as string);
+  if (tokens.length === 0) return;
+
+  // "Jane Doe <jane@x.com>" -> "Jane Doe"; bare address stays as is.
+  const name = payload.from.replace(/<.*>/, "").replace(/"/g, "").trim() || extractEmail(payload.from);
+  const preview = (payload.text ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
+
+  const { invalidTokens } = await sendFcm(tokens, {
+    title: name,
+    body: payload.subject ? (preview ? `${payload.subject} — ${preview}` : payload.subject) : preview || "New message",
+    tag: threadId ?? undefined,
+    data: { threadId: threadId ?? "", url: threadId ? `/thread/${threadId}` : "/inbox" },
+  });
+
+  if (invalidTokens.length > 0) {
+    await db.from("push_subscriptions").delete().eq("mailbox_id", mailboxId).in("endpoint", invalidTokens);
+  }
 }

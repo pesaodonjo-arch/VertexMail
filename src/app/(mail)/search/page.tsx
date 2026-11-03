@@ -28,7 +28,7 @@ export default function SearchPage() {
       <FolderHeader title="Search" />
       <div className="border-b border-ink-200 bg-white px-4 py-3">
         <div className="relative">
-          <SearchIcon size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
+          <SearchIcon size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-500" />
           <input
             autoFocus
             className="h-11 w-full rounded-lg border border-ink-200 bg-ink-50 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -41,7 +41,7 @@ export default function SearchPage() {
       {searched ? (
         <ThreadList threads={results} emptyLabel="No messages match that search" />
       ) : (
-        <div className="flex flex-1 items-center justify-center px-8 text-center text-sm text-ink-400">
+        <div className="flex flex-1 items-center justify-center px-8 text-center text-sm text-ink-500">
           Search only looks through your own mailbox.
         </div>
       )}

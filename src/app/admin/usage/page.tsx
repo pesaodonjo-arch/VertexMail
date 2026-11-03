@@ -18,11 +18,11 @@ export default async function UsagePage() {
   return (
     <>
       <AdminPageHeader title="Usage" description="Recent activity on the send API, most recent first." />
-      <div className="p-6">
-        <div className="rounded-xl border border-ink-200 bg-white">
-          <table className="w-full text-sm">
+      <div className="p-4 md:p-6">
+        <div className="overflow-hidden rounded-xl border border-ink-200 bg-white">
+          <table className="vx-table w-full text-sm">
             <thead>
-              <tr className="border-b border-ink-100 text-left text-xs font-medium text-ink-400">
+              <tr className="border-b border-ink-100 text-left text-xs font-medium text-ink-500">
                 <th className="px-4 py-3">Time</th>
                 <th className="px-4 py-3">Domain</th>
                 <th className="px-4 py-3">API key</th>
@@ -33,11 +33,11 @@ export default async function UsagePage() {
             <tbody className="divide-y divide-ink-100">
               {(usage ?? []).map((u: any) => (
                 <tr key={u.id}>
-                  <td className="px-4 py-3 text-ink-500">{new Date(u.created_at).toLocaleString()}</td>
-                  <td className="px-4 py-3 font-medium text-ink-800">{u.domains?.domain_name}</td>
-                  <td className="px-4 py-3 text-ink-600">{u.api_keys?.name ?? "—"}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-ink-500">{u.endpoint}</td>
-                  <td className="px-4 py-3">
+                  <td data-label="Time" className="px-4 py-3 text-ink-500">{new Date(u.created_at).toLocaleString()}</td>
+                  <td data-label="Domain" className="px-4 py-3 font-medium text-ink-800">{u.domains?.domain_name}</td>
+                  <td data-label="API key" className="px-4 py-3 text-ink-600">{u.api_keys?.name ?? "—"}</td>
+                  <td data-label="Endpoint" className="px-4 py-3 font-mono text-xs text-ink-500">{u.endpoint}</td>
+                  <td data-label="Result" className="px-4 py-3">
                     {u.status_code < 300 ? (
                       <Badge tone="success">{u.status_code} sent</Badge>
                     ) : (
@@ -47,7 +47,7 @@ export default async function UsagePage() {
                 </tr>
               ))}
               {(usage ?? []).length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-ink-400">No API activity yet.</td></tr>
+                <tr><td colSpan={5} className="vx-empty px-4 py-8 text-center text-ink-500">No API activity yet.</td></tr>
               )}
             </tbody>
           </table>

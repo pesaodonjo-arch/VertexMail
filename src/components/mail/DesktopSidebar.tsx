@@ -6,6 +6,7 @@ import { PenSquare, Shield } from "lucide-react";
 import clsx from "clsx";
 import { VertexMark } from "@/components/ui/VertexMark";
 import { Button } from "@/components/ui/Button";
+import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { AccountSwitcher } from "@/components/accounts/AccountSwitcher";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 import { folders } from "./folders";
@@ -53,6 +54,7 @@ export function DesktopSidebar({ mailboxAddress, isAdmin, userId }: { mailboxAdd
       </nav>
 
       <div className="space-y-2 border-t border-ink-100 px-4 py-4">
+        <ThemeSwitcher />
         <AccountSwitcher currentUserId={userId} currentLabel={mailboxAddress} />
         <Link href="/account" className="block text-xs text-brand-600 hover:underline">
           Account settings

@@ -56,19 +56,19 @@ export default function ApiKeysPage() {
         title="API keys"
         description="Each key is scoped to one domain and can only send from mailboxes on that domain."
       />
-      <div className="p-6">
-        <form onSubmit={createKey} className="mb-6 flex flex-wrap items-end gap-2 rounded-xl border border-ink-200 bg-white p-4">
+      <div className="p-4 md:p-6">
+        <form onSubmit={createKey} className="mb-5 flex flex-col gap-3 rounded-xl border border-ink-200 bg-white p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-2">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-ink-700">Domain</label>
-            <select className="h-11 rounded-lg border border-ink-200 bg-white px-3 text-sm" value={domainId} onChange={(e) => setDomainId(e.target.value)}>
+            <select className="h-11 w-full rounded-lg border border-ink-200 bg-white px-3 text-sm sm:w-auto" value={domainId} onChange={(e) => setDomainId(e.target.value)}>
               {domains.map((d) => <option key={d.id} value={d.id}>{d.domain_name}</option>)}
             </select>
           </div>
-          <div className="flex-1 min-w-[10rem]">
+          <div className="sm:min-w-[10rem] sm:flex-1">
             <label className="mb-1.5 block text-sm font-medium text-ink-700">Key name</label>
             <Input placeholder="Darasa signup flow" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
-          <Button type="submit" disabled={creating || !domainId}><Plus size={16} /> {creating ? "Creating…" : "Create key"}</Button>
+          <Button type="submit" className="w-full sm:w-auto" disabled={creating || !domainId}><Plus size={16} /> {creating ? "Creating…" : "Create key"}</Button>
         </form>
 
         {newSecret && (
@@ -76,17 +76,17 @@ export default function ApiKeysPage() {
             <p className="text-sm font-semibold text-ink-800">Copy this key now — it won't be shown again</p>
             <div className="mt-2 flex items-center gap-2 rounded-lg bg-white px-3 py-2">
               <code className="flex-1 truncate text-sm text-ink-700">{newSecret}</code>
-              <button onClick={() => navigator.clipboard.writeText(newSecret)} className="text-ink-400 hover:text-ink-700">
+              <button onClick={() => navigator.clipboard.writeText(newSecret)} className="text-ink-500 hover:text-ink-700">
                 <Copy size={15} />
               </button>
             </div>
           </div>
         )}
 
-        <div className="rounded-xl border border-ink-200 bg-white">
-          <table className="w-full text-sm">
+        <div className="overflow-hidden rounded-xl border border-ink-200 bg-white">
+          <table className="vx-table w-full text-sm">
             <thead>
-              <tr className="border-b border-ink-100 text-left text-xs font-medium text-ink-400">
+              <tr className="border-b border-ink-100 text-left text-xs font-medium text-ink-500">
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Domain</th>
                 <th className="px-4 py-3">Key</th>
@@ -98,19 +98,19 @@ export default function ApiKeysPage() {
             <tbody className="divide-y divide-ink-100">
               {keys.map((k) => (
                 <tr key={k.id}>
-                  <td className="px-4 py-3 font-medium text-ink-800">{k.name}</td>
-                  <td className="px-4 py-3 text-ink-600">{k.domains?.domain_name}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-ink-500">{k.key_prefix}…</td>
-                  <td className="px-4 py-3"><Badge tone={k.status === "active" ? "success" : "danger"}>{k.status}</Badge></td>
-                  <td className="px-4 py-3 text-ink-500">{k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "never"}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="vx-title px-4 py-3 font-medium text-ink-800">{k.name}</td>
+                  <td data-label="Domain" className="px-4 py-3 text-ink-600">{k.domains?.domain_name}</td>
+                  <td data-label="Key" className="px-4 py-3 font-mono text-xs text-ink-500">{k.key_prefix}…</td>
+                  <td data-label="Status" className="px-4 py-3"><Badge tone={k.status === "active" ? "success" : "danger"}>{k.status}</Badge></td>
+                  <td data-label="Last used" className="px-4 py-3 text-ink-500">{k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "never"}</td>
+                  <td className="vx-actions px-4 py-3 text-right">
                     {k.status === "active" && (
                       <Button size="sm" variant="danger" onClick={() => revoke(k.id)}><Ban size={14} /> Revoke</Button>
                     )}
                   </td>
                 </tr>
               ))}
-              {keys.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-ink-400">No API keys yet.</td></tr>}
+              {keys.length === 0 && <tr><td colSpan={6} className="vx-empty px-4 py-8 text-center text-ink-500">No API keys yet.</td></tr>}
             </tbody>
           </table>
         </div>

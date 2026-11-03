@@ -112,7 +112,7 @@ function LoginForm() {
           </div>
         </form>
 
-        <p className="mt-6 text-center text-xs text-ink-400">
+        <p className="mt-6 text-center text-xs text-ink-500">
           Mailboxes are created by your domain administrator.{" "}
           <a href="/signup" className="font-medium text-brand-600 hover:underline">
             Run your own domain? Sign up here.

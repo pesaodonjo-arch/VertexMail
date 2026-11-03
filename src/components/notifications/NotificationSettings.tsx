@@ -35,7 +35,7 @@ export function NotificationSettings() {
   return (
     <div className="rounded-xl border border-ink-200 bg-white p-4 shadow-panel">
       <div className="flex items-center gap-2">
-        {state === "on" ? <Bell size={16} className="text-brand-600" /> : <BellOff size={16} className="text-ink-400" />}
+        {state === "on" ? <Bell size={16} className="text-brand-600" /> : <BellOff size={16} className="text-ink-500" />}
         <p className="text-sm font-medium text-ink-800">New mail notifications</p>
       </div>
       {state && <p className="mt-1 text-xs text-ink-500">{copy[state]}</p>}

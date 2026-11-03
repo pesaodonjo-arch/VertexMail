@@ -74,7 +74,7 @@ export function AccountSwitcher({ currentUserId, currentLabel, variant = "popove
         "space-y-0.5 p-1.5",
         variant === "popover" &&
           (dark
-            ? "absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-white/10 bg-ink-900 shadow-panel"
+            ? "absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-white/10 bg-[#12172B] shadow-panel"
             : "absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-ink-200 bg-white shadow-panel")
       )}
     >
@@ -82,7 +82,7 @@ export function AccountSwitcher({ currentUserId, currentLabel, variant = "popove
         <Avatar text={currentLabel} dark={dark} />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{currentLabel}</span>
-          <span className={clsx("block text-[11px]", dark ? "text-ink-400" : "text-ink-400")}>Current account</span>
+          <span className={clsx("block text-[11px]", dark ? "text-ink-400" : "text-ink-500")}>Current account</span>
         </span>
         <Check size={15} className="shrink-0 text-brand-500" />
       </div>
@@ -93,15 +93,15 @@ export function AccountSwitcher({ currentUserId, currentLabel, variant = "popove
             <Avatar text={a.label} dark={dark} />
             <span className="min-w-0 flex-1">
               <span className="block truncate font-medium">{a.label}</span>
-              {a.label !== a.email && <span className="block truncate text-[11px] text-ink-400">Login: {a.email}</span>}
+              {a.label !== a.email && <span className={clsx("block truncate text-[11px]", dark ? "text-ink-400" : "text-ink-500")}>Login: {a.email}</span>}
             </span>
-            {busy === a.userId && <span className="text-[11px] text-ink-400">Switching…</span>}
+            {busy === a.userId && <span className={clsx("text-[11px]", dark ? "text-ink-400" : "text-ink-500")}>Switching…</span>}
           </button>
           <button
             type="button"
             aria-label={`Remove ${a.label} from this device`}
             title="Remove from this device"
-            className={clsx("ml-1 shrink-0 rounded-md p-1.5 text-ink-400", dark ? "hover:bg-white/10 hover:text-white" : "hover:bg-ink-100 hover:text-ink-700")}
+            className={clsx("ml-1 shrink-0 rounded-md p-1.5", dark ? "text-ink-400" : "text-ink-500", dark ? "hover:bg-white/10 hover:text-white" : "hover:bg-ink-100 hover:text-ink-700")}
             onClick={() => { removeAccount(a.userId); refresh(); }}
           >
             <X size={14} />
@@ -131,7 +131,7 @@ export function AccountSwitcher({ currentUserId, currentLabel, variant = "popove
   if (variant === "list") {
     return (
       <div className="rounded-xl border border-ink-200 bg-white p-2 shadow-panel">
-        <p className="px-3 pb-1 pt-2 text-xs font-medium uppercase tracking-wide text-ink-400">Accounts on this device</p>
+        <p className={clsx("px-3 pb-1 pt-2 text-xs font-medium uppercase tracking-wide", dark ? "text-ink-400" : "text-ink-500")}>Accounts on this device</p>
         {panel}
       </div>
     );
@@ -153,7 +153,7 @@ export function AccountSwitcher({ currentUserId, currentLabel, variant = "popove
         <span className={clsx("min-w-0 flex-1 truncate text-xs font-medium", dark ? "text-ink-100" : "text-ink-600")}>
           {currentLabel}
         </span>
-        <ChevronsUpDown size={14} className="shrink-0 text-ink-400" />
+        <ChevronsUpDown size={14} className={clsx("shrink-0", dark ? "text-ink-400" : "text-ink-500")} />
       </button>
     </div>
   );

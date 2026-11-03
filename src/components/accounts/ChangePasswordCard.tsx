@@ -52,7 +52,7 @@ export function ChangePasswordCard({ loginEmail }: { loginEmail: string }) {
   return (
     <form onSubmit={submit} className="rounded-xl border border-ink-200 bg-white p-4 shadow-panel">
       <p className="text-sm font-medium text-ink-800">Change password</p>
-      <p className="mt-0.5 text-xs text-ink-400">Applies to signing in as {loginEmail}.</p>
+      <p className="mt-0.5 text-xs text-ink-500">Applies to signing in as {loginEmail}.</p>
 
       <div className="mt-3 space-y-2.5">
         <Input type="password" placeholder="Current password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />

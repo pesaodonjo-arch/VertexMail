@@ -8,7 +8,7 @@ export function FolderHeader({ title, count }: { title: string; count?: number }
       <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-3.5">
         <MenuButton />
         <h1 className="min-w-0 flex-1 truncate font-display text-lg font-bold text-ink-900">{title}</h1>
-        {typeof count === "number" && <span className="shrink-0 text-sm text-ink-400">{count}</span>}
+        {typeof count === "number" && <span className="shrink-0 text-sm text-ink-500">{count}</span>}
       </div>
     </header>
   );

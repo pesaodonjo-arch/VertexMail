@@ -4,6 +4,7 @@ import { DesktopSidebar } from "@/components/mail/DesktopSidebar";
 import { MobileNavProvider, MobileDrawer, MobileComposeFab } from "@/components/mail/MobileNav";
 import { NotificationProvider } from "@/components/notifications/NotificationProvider";
 import { AccountSync } from "@/components/accounts/AccountSync";
+import { NativePushRegister } from "@/components/mail/NativePushRegister";
 import { PoweredBy } from "@/components/ui/PoweredBy";
 
 export default async function MailLayout({ children }: { children: React.ReactNode }) {
@@ -51,6 +52,7 @@ export default async function MailLayout({ children }: { children: React.ReactNo
         {/* h-dvh (not h-screen) so the bottom of the page isn't hidden behind mobile browser toolbars */}
         <div className="flex h-dvh bg-ink-50">
           <AccountSync userId={user.id} label={address} />
+          <NativePushRegister userId={user.id} />
           <DesktopSidebar mailboxAddress={address} isAdmin={isAdmin} userId={user.id} />
           <div className="flex min-w-0 flex-1 flex-col">
             {children}

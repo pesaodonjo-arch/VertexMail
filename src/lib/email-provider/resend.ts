@@ -32,6 +32,7 @@ export class ResendProvider implements EmailProvider {
       attachments: (message.attachments ?? []).map((a) => ({
         filename: a.fileName,
         content: a.contentBase64,
+        content_type: a.contentType,
       })),
     };
 

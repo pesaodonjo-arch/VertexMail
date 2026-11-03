@@ -2,6 +2,7 @@
 
 import type { Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { unregisterNativePush } from "@/lib/native-push";
 import {
   activateFirstWorking,
   clearAccounts,
@@ -107,6 +108,7 @@ export async function beginAddAccount(): Promise<void> {
 
 /** Sign out of the current account only; fall back to another saved one if any. */
 export async function signOutCurrentAccount(): Promise<void> {
+  await unregisterNativePush(); // stop notifications for this account on this phone
   const supabase = createClient();
   const {
     data: { session },
@@ -122,6 +124,7 @@ export async function signOutCurrentAccount(): Promise<void> {
 
 /** Sign out everywhere on this device and forget every saved account. */
 export async function signOutAllAccounts(): Promise<void> {
+  await unregisterNativePush();
   const s = storage();
   if (s) clearAccounts(s);
   await createClient().auth.signOut();

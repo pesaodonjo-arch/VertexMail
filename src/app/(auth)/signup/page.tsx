@@ -73,7 +73,7 @@ export default function SignupPage() {
                 placeholder="mycompany.com"
                 value={domain} onChange={(e) => setDomain(e.target.value)}
               />
-              <p className="mt-1.5 text-xs text-ink-400">
+              <p className="mt-1.5 text-xs text-ink-500">
                 You'll need to add a DNS record to prove you own it — nothing works until that's verified.
               </p>
             </div>
@@ -107,7 +107,7 @@ export default function SignupPage() {
           </div>
         </form>
 
-        <p className="mt-6 text-center text-xs text-ink-400">
+        <p className="mt-6 text-center text-xs text-ink-500">
           Already have a mailbox?{" "}
           <a href="/login" className="font-medium text-brand-600 hover:underline">Sign in</a>
         </p>

@@ -24,7 +24,7 @@ export default async function ThreadPage({ params }: { params: { id: string } })
 
   const { data: messages } = await supabase
     .from("messages")
-    .select("*, attachments(id, file_name, size_bytes, content_type)")
+    .select("*, attachments(id, file_name, size_bytes, content_type, storage_path)")
     .eq("thread_id", params.id)
     .order("created_at", { ascending: true });
 
@@ -58,27 +58,42 @@ export default async function ThreadPage({ params }: { params: { id: string } })
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-ink-900">
                   {m.direction === "outbound" ? "You" : m.from_address}
-                  {m.is_draft && <span className="ml-2 text-xs font-normal text-ink-400">(draft)</span>}
+                  {m.is_draft && <span className="ml-2 text-xs font-normal text-ink-500">(draft)</span>}
                 </p>
-                <p className="truncate text-xs text-ink-400">to {m.to_addresses?.join(", ")}</p>
+                <p className="truncate text-xs text-ink-500">to {m.to_addresses?.join(", ")}</p>
               </div>
-              <time className="shrink-0 text-xs text-ink-400">{format(new Date(m.created_at), "MMM d, h:mm a")}</time>
+              <time className="shrink-0 text-xs text-ink-500">{format(new Date(m.created_at), "MMM d, h:mm a")}</time>
             </div>
 
             {m.body_html ? (
-              <div className="prose prose-sm max-w-none text-ink-800" dangerouslySetInnerHTML={{ __html: m.body_html }} />
+              <div className="vx-keep prose prose-sm max-w-none text-ink-900 dark:rounded-lg dark:bg-white dark:p-3 [--tw-prose-body:theme(colors.ink.900)] [--tw-prose-headings:theme(colors.ink.900)] [--tw-prose-bold:theme(colors.ink.900)] [--tw-prose-lead:theme(colors.ink.800)] [--tw-prose-counters:theme(colors.ink.700)] [--tw-prose-bullets:theme(colors.ink.700)] [--tw-prose-quotes:theme(colors.ink.800)] [--tw-prose-quote-borders:theme(colors.ink.300)] [--tw-prose-links:theme(colors.brand.700)]" dangerouslySetInnerHTML={{ __html: m.body_html }} />
             ) : (
-              <p className="whitespace-pre-wrap text-sm text-ink-800">{m.body_text}</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-900">{m.body_text}</p>
             )}
 
             {(m.attachments ?? []).length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2 border-t border-ink-100 pt-3">
-                {(m.attachments ?? []).map((a: any) => (
-                  <span key={a.id} className="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 px-2.5 py-1.5 text-xs text-ink-600">
-                    <Paperclip size={12} /> {a.file_name}
-                    <span className="text-ink-400">· {Math.round(a.size_bytes / 1024)} KB</span>
-                  </span>
-                ))}
+                {(m.attachments ?? []).map((a: any) => {
+                  const size = a.size_bytes >= 1024 * 1024 ? `${(a.size_bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(a.size_bytes / 1024))} KB`;
+                  const chip = "inline-flex items-center gap-1.5 rounded-lg border border-ink-200 px-2.5 py-1.5 text-xs text-ink-600";
+                  return a.storage_path ? (
+                    <a
+                      key={a.id}
+                      href={`/api/mail/attachments/${a.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${chip} hover:border-brand-400 hover:text-brand-700`}
+                    >
+                      <Paperclip size={12} /> {a.file_name}
+                      <span className="text-ink-500">· {size}</span>
+                    </a>
+                  ) : (
+                    <span key={a.id} className={chip}>
+                      <Paperclip size={12} /> {a.file_name}
+                      <span className="text-ink-500">· {size}</span>
+                    </span>
+                  );
+                })}
               </div>
             )}
           </article>

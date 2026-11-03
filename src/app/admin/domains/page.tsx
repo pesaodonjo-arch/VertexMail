@@ -87,7 +87,7 @@ export default function DomainsPage() {
     });
     const data = await res.json();
     setAdding(false);
-    if (!res.ok) { setError(data.error ?? "Couldn't add that domain."); return; }
+    if (!res.ok) { setError(data.message ?? data.error ?? "Couldn't add that domain."); return; }
     setNewDomain("");
     setExpandedId(data.domain.id);
     load();
@@ -184,9 +184,9 @@ export default function DomainsPage() {
         description="Connect a domain, add its DNS records, then verify to start sending and receiving."
       />
 
-      <div className="p-6">
-        <form onSubmit={addDomain} className="mb-6 flex items-end gap-2 rounded-xl border border-ink-200 bg-white p-4">
-          <div className="flex-1">
+      <div className="p-4 md:p-6">
+        <form onSubmit={addDomain} className="mb-5 flex flex-col gap-3 rounded-xl border border-ink-200 bg-white p-4 sm:flex-row sm:items-end sm:gap-2">
+          <div className="sm:flex-1">
             <label className="mb-1.5 block text-sm font-medium text-ink-700">Add a domain</label>
             <Input
               placeholder="darasa.site" value={newDomain}
@@ -194,20 +194,20 @@ export default function DomainsPage() {
               required
             />
           </div>
-          <Button type="submit" disabled={adding}>
+          <Button type="submit" className="w-full sm:w-auto" disabled={adding}>
             <Plus size={16} /> {adding ? "Adding…" : "Add domain"}
           </Button>
         </form>
 
         {error && <p className="mb-4 rounded-lg bg-accent-rose/10 px-3 py-2 text-sm text-accent-rose">{error}</p>}
         {devSkipNotice && (
-          <p className="mb-4 rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-800">⚠️ {devSkipNotice}</p>
+          <p className="mb-4 rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/15 dark:text-amber-200">⚠️ {devSkipNotice}</p>
         )}
 
-        <div className="rounded-xl border border-ink-200 bg-white">
-          <table className="w-full text-sm">
+        <div className="overflow-hidden rounded-xl border border-ink-200 bg-white">
+          <table className="vx-table w-full text-sm">
             <thead>
-              <tr className="border-b border-ink-100 text-left text-xs font-medium text-ink-400">
+              <tr className="border-b border-ink-100 text-left text-xs font-medium text-ink-500">
                 <th className="px-4 py-3">Domain</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Mailboxes</th>
@@ -221,15 +221,15 @@ export default function DomainsPage() {
                 return (
                   <React.Fragment key={d.id}>
                     <tr>
-                      <td className="px-4 py-3 font-medium text-ink-800">{d.domain_name}</td>
-                      <td className="px-4 py-3">
+                      <td className="vx-title px-4 py-3 font-medium text-ink-800">{d.domain_name}</td>
+                      <td data-label="Status" className="px-4 py-3">
                         <Badge tone={d.status === "verified" ? "success" : d.status === "suspended" ? "danger" : "warning"}>
                           {d.status}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-ink-600">{d.mailboxes?.[0]?.count ?? 0} / {d.max_mailboxes}</td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-2">
+                      <td data-label="Mailboxes" className="px-4 py-3 text-ink-600">{d.mailboxes?.[0]?.count ?? 0} / {d.max_mailboxes}</td>
+                      <td className="vx-actions px-4 py-3 text-right">
+                        <div className="flex flex-wrap justify-end gap-2">
                           {d.status !== "verified" && (
                             <Button
                               size="sm" variant="ghost"
@@ -265,10 +265,10 @@ export default function DomainsPage() {
                       </td>
                     </tr>
                     {emailExpandedId === d.id && (
-                      <tr>
-                        <td colSpan={4} className="bg-ink-50 px-4 py-4">
+                      <tr className="vx-panel">
+                        <td colSpan={4} className="vx-full bg-ink-50 px-4 py-4">
                           {!emailForm[d.id] ? (
-                            <p className="text-sm text-ink-400">Loading…</p>
+                            <p className="text-sm text-ink-500">Loading…</p>
                           ) : (
                             <div className="max-w-xl space-y-3">
                               <p className="text-sm font-semibold text-ink-800">
@@ -331,7 +331,7 @@ export default function DomainsPage() {
                                       <button
                                         type="button"
                                         onClick={() => copy(`${window.location.origin}/api/inbound/resend/${d.id}`, `webhook-${d.id}`)}
-                                        className="shrink-0 rounded-md p-1.5 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
+                                        className="shrink-0 rounded-md p-1.5 text-ink-500 hover:bg-ink-100 hover:text-ink-700"
                                         title="Copy webhook URL"
                                       >
                                         {copiedKey === `webhook-${d.id}` ? <Check size={14} className="text-accent-emerald" /> : <Copy size={14} />}
@@ -349,7 +349,7 @@ export default function DomainsPage() {
                                       onChange={(e) => updateEmailForm(d.id, { resendWebhookSecretInput: e.target.value })}
                                     />
                                   </div>
-                                  <p className="text-xs text-ink-400">
+                                  <p className="text-xs text-ink-500">
                                     Without this secret, incoming mail can't be verified and receiving won't work — sending will still work with just the API key above.
                                   </p>
                                 </div>
@@ -383,8 +383,8 @@ export default function DomainsPage() {
                       </tr>
                     )}
                     {isOpen && (
-                      <tr>
-                        <td colSpan={4} className="bg-brand-50 px-4 py-4">
+                      <tr className="vx-panel">
+                        <td colSpan={4} className="vx-full bg-brand-50 px-4 py-4">
                           <p className="mb-3 text-sm font-semibold text-brand-800">
                             Add these DNS records at your registrar for {d.domain_name}
                           </p>
@@ -394,12 +394,12 @@ export default function DomainsPage() {
                               return (
                                 <div key={i} className="flex flex-wrap items-center gap-3 rounded-lg bg-white px-3 py-2 text-xs">
                                   <span className="w-14 shrink-0 font-mono font-semibold text-brand-700">{r.type}</span>
-                                  <span className="min-w-[10rem] font-mono text-ink-700">{r.host}</span>
+                                  <span className="min-w-[10rem] break-all font-mono text-ink-700">{r.host}</span>
                                   <span className="flex-1 break-all font-mono text-ink-500">{r.value}</span>
                                   <button
                                     type="button"
                                     onClick={() => copy(r.value, key)}
-                                    className="shrink-0 rounded-md p-1.5 text-ink-400 hover:bg-ink-100 hover:text-ink-700"
+                                    className="shrink-0 rounded-md p-1.5 text-ink-500 hover:bg-ink-100 hover:text-ink-700"
                                     title="Copy value"
                                   >
                                     {copiedKey === key ? <Check size={14} className="text-accent-emerald" /> : <Copy size={14} />}
@@ -418,7 +418,7 @@ export default function DomainsPage() {
                 );
               })}
               {!loading && domains.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-ink-400">No domains yet — add one above.</td></tr>
+                <tr><td colSpan={4} className="vx-empty px-4 py-8 text-center text-ink-500">No domains yet — add one above.</td></tr>
               )}
             </tbody>
           </table>

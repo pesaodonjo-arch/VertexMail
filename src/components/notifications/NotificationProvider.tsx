@@ -158,7 +158,7 @@ export function NotificationProvider({
         style={{ top: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
       >
         {toasts.map((t) => (
-          <div key={t.id} className="vx-toast pointer-events-auto flex items-start gap-3 rounded-xl bg-ink-950 p-3 text-white shadow-lg">
+          <div key={t.id} className="vx-keep vx-toast pointer-events-auto flex items-start gap-3 rounded-xl bg-ink-950 p-3 text-white shadow-lg">
             <Link href={t.href} onClick={() => dismiss(t.id)} className="flex min-w-0 flex-1 items-start gap-3">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600">
                 <Mail size={16} />

@@ -14,6 +14,9 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
  *   3. Platform-admin actions that must operate across every domain
  *      (e.g. suspending a mailbox), after confirming the caller is a
  *      platform admin via the session client.
+ *   5. src/app/api/admin/domains/route.ts (POST) — lets an existing domain
+ *      admin add another domain; the route confirms the caller is a platform
+ *      or domain admin first, then links the new domain to them.
  *   4. src/app/api/signup/route.ts    — public self-service domain-admin
  *      signup has no session yet, so creating the auth user + domain +
  *      domain_admins link (normally platform-admin-only by RLS) has to

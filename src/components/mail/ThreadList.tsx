@@ -22,7 +22,7 @@ export function ThreadList({ threads, emptyLabel, emptyHint }: { threads: Thread
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-1 px-8 py-24 text-center">
         <p className="font-display text-base font-semibold text-ink-700">{emptyLabel}</p>
-        <p className="text-sm text-ink-400">{emptyHint ?? "New mail will show up here as it arrives."}</p>
+        <p className="text-sm text-ink-500">{emptyHint ?? "New mail will show up here as it arrives."}</p>
       </div>
     );
   }
@@ -50,15 +50,15 @@ export function ThreadList({ threads, emptyLabel, emptyHint }: { threads: Thread
                 <p className={clsx("truncate text-sm", !t.is_read ? "font-semibold text-ink-900" : "font-medium text-ink-700")}>
                   {t.counterparty ?? "Unknown sender"}
                 </p>
-                <span className="shrink-0 text-xs text-ink-400">
+                <span className="shrink-0 text-xs text-ink-500">
                   {formatDistanceToNowStrict(new Date(t.last_message_at), { addSuffix: false })}
                 </span>
               </div>
               <p className={clsx("truncate text-sm", !t.is_read ? "text-ink-800" : "text-ink-500")}>
                 {t.subject}
-                {t.message_count > 1 && <span className="ml-1 text-ink-400">({t.message_count})</span>}
+                {t.message_count > 1 && <span className="ml-1 text-ink-500">({t.message_count})</span>}
               </p>
-              {t.preview && <p className="truncate text-xs text-ink-400">{t.preview}</p>}
+              {t.preview && <p className="truncate text-xs text-ink-500">{t.preview}</p>}
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1.5 pt-0.5">
               {t.has_attachment && <Paperclip size={14} className="text-ink-300" />}

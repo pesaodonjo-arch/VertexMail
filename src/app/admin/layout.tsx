@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminSidebar, AdminDrawer } from "@/components/admin/AdminSidebar";
+import { AdminNavProvider } from "@/components/admin/AdminNav";
 import { AccountSync } from "@/components/accounts/AccountSync";
 import { PoweredBy } from "@/components/ui/PoweredBy";
 
@@ -37,13 +38,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     : user.email ?? "";
 
   return (
-    <div className="flex h-dvh bg-ink-50">
-      <AccountSync userId={user.id} label={accountLabel} />
-      <AdminSidebar hasMailbox={!!ownMailbox} userId={user.id} accountLabel={accountLabel} />
-      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
-        <div className="flex-1">{children}</div>
-        <PoweredBy />
+    <AdminNavProvider>
+      <div className="flex h-dvh bg-ink-50">
+        <AccountSync userId={user.id} label={accountLabel} />
+        <AdminSidebar hasMailbox={!!ownMailbox} userId={user.id} accountLabel={accountLabel} />
+        <AdminDrawer hasMailbox={!!ownMailbox} userId={user.id} accountLabel={accountLabel} />
+        <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
+          <div className="flex-1">{children}</div>
+          <PoweredBy />
+        </div>
       </div>
-    </div>
+    </AdminNavProvider>
   );
 }

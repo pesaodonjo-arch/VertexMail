@@ -5,6 +5,11 @@ import { storeInboundMessage } from "@/lib/inbound/store-message";
 import { extractEmail } from "@/lib/reply";
 
 export const runtime = "nodejs";
+// Downloading attachments from Resend and saving them can take a while.
+export const maxDuration = 60;
+
+// Files bigger than this are listed on the message but not saved.
+const MAX_INBOUND_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 
 /**
  * POST /api/inbound/resend/:domainId
@@ -35,12 +40,12 @@ export const runtime = "nodejs";
  * route may need updating if Resend changes the webhook payload shape
  * or the retrieve-email response shape before general availability.
  *
- * NOTE ON ATTACHMENTS: the retrieve-email response includes attachment
- * METADATA (filename, content_type, id) but not content — fetching each
- * attachment's actual bytes needs a further per-attachment call to the
- * Retrieve Received Attachment endpoint, which isn't wired up here yet
- * (matches the Cloudflare path's own attachment handling, which is
- * similarly a documented stub — see store-message.ts).
+ * ATTACHMENTS: the retrieve-email response only carries attachment metadata,
+ * so after fetching the email we call Resend's "list received email
+ * attachments" endpoint, which returns a short-lived signed download_url per
+ * file. We download each file here (server-to-server, so Vercel's request-body
+ * limit doesn't apply) and hand the bytes to storeInboundMessage(), which saves
+ * them to Supabase Storage.
  */
 export async function POST(req: NextRequest, { params }: { params: { domainId: string } }) {
   const db = createAdminClient();
@@ -110,6 +115,8 @@ export async function POST(req: NextRequest, { params }: { params: { domainId: s
     return NextResponse.json({ status: "ignored_other_domain" });
   }
 
+  const attachments = await fetchReceivedAttachments(emailId, settings.api_key, email.attachments);
+
   const result = await storeInboundMessage(db, {
     to: recipient,
     from: fromAddress,
@@ -118,6 +125,7 @@ export async function POST(req: NextRequest, { params }: { params: { domainId: s
     html: email.html,
     messageIdHeader: email.message_id,
     inReplyTo: readHeader(email.headers, "in-reply-to"),
+    attachments,
   });
 
   return NextResponse.json(result.body, { status: result.status });
@@ -141,4 +149,76 @@ function readHeader(headers: unknown, name: string): string | null {
     }
   }
   return null;
+}
+
+/**
+ * Pulls every attachment of a received email from Resend. Never throws: a
+ * problem with one file must not lose the whole email, so failures are logged
+ * and that file is skipped (or kept as metadata only when it's too big).
+ */
+async function fetchReceivedAttachments(
+  emailId: string,
+  apiKey: string,
+  fromEmailObject: unknown
+): Promise<{ fileName: string; contentType: string; sizeBytes: number; contentBase64: string }[]> {
+  const out: { fileName: string; contentType: string; sizeBytes: number; contentBase64: string }[] = [];
+  try {
+    const headers = { Authorization: `Bearer ${apiKey}` };
+    const listRes = await fetch(`https://api.resend.com/emails/receiving/${emailId}/attachments`, { headers });
+
+    let items: any[] = [];
+    if (listRes.ok) {
+      const json = await listRes.json();
+      items = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
+    } else if (Array.isArray(fromEmailObject)) {
+      // Fall back to the metadata embedded in the email itself.
+      items = fromEmailObject as any[];
+    }
+
+    for (const item of items) {
+      try {
+        const fileName: string = item.filename ?? item.file_name ?? "attachment";
+        const contentType: string = item.content_type ?? "application/octet-stream";
+
+        // Skip images embedded inside the HTML body (logos, signatures) — they
+        // aren't real attachments and would clutter the message.
+        if (item.content_disposition === "inline" && contentType.startsWith("image/")) continue;
+
+        const declaredSize = typeof item.size === "number" ? item.size : 0;
+        if (declaredSize > MAX_INBOUND_ATTACHMENT_BYTES) {
+          out.push({ fileName, contentType, sizeBytes: declaredSize, contentBase64: "" });
+          continue;
+        }
+
+        // The list response normally includes download_url; if not, ask for the single attachment.
+        let url: string | undefined = item.download_url;
+        if (!url && item.id) {
+          const one = await fetch(`https://api.resend.com/emails/receiving/${emailId}/attachments/${item.id}`, { headers });
+          if (one.ok) url = (await one.json())?.download_url;
+        }
+        if (!url) {
+          out.push({ fileName, contentType, sizeBytes: declaredSize, contentBase64: "" });
+          continue;
+        }
+
+        const fileRes = await fetch(url);
+        if (!fileRes.ok) {
+          console.error("[inbound] attachment download failed", fileName, fileRes.status);
+          out.push({ fileName, contentType, sizeBytes: declaredSize, contentBase64: "" });
+          continue;
+        }
+        const bytes = Buffer.from(await fileRes.arrayBuffer());
+        if (bytes.length > MAX_INBOUND_ATTACHMENT_BYTES) {
+          out.push({ fileName, contentType, sizeBytes: bytes.length, contentBase64: "" });
+          continue;
+        }
+        out.push({ fileName, contentType, sizeBytes: bytes.length, contentBase64: bytes.toString("base64") });
+      } catch (e) {
+        console.error("[inbound] attachment error", e);
+      }
+    }
+  } catch (e) {
+    console.error("[inbound] listing attachments failed", e);
+  }
+  return out;
 }

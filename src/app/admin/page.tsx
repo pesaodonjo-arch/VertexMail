@@ -30,16 +30,16 @@ export default async function AdminOverviewPage() {
   return (
     <>
       <AdminPageHeader title="Overview" description="Domains, mailboxes and API activity across your account." />
-      <div className="grid grid-cols-2 gap-4 p-6 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4 md:gap-4 md:p-6">
         <StatCard label="Verified domains" value={verifiedDomains} hint={`${domains?.length ?? 0} total`} tone="brand" />
         <StatCard label="Active mailboxes" value={activeMailboxes} tone="teal" />
         <StatCard label="Emails sent (24h)" value={sentLast24h} />
         <StatCard label="API error rate" value={`${errorRate}%`} hint="last 200 requests" />
       </div>
 
-      <div className="px-6 pb-8">
+      <div className="px-4 pb-8 md:px-6">
         <div className="rounded-xl border border-ink-200 bg-white">
-          <div className="flex items-center justify-between border-b border-ink-100 px-4 py-3">
+          <div className="flex items-center justify-between gap-3 border-b border-ink-100 px-4 py-3">
             <h2 className="text-sm font-semibold text-ink-800">Domains</h2>
             <Link href="/admin/domains" className="text-xs font-medium text-brand-600 hover:underline">
               Manage domains
@@ -47,15 +47,15 @@ export default async function AdminOverviewPage() {
           </div>
           <ul className="divide-y divide-ink-100">
             {(domains ?? []).slice(0, 6).map((d) => (
-              <li key={d.id} className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm font-medium text-ink-800">{d.domain_name}</span>
+              <li key={d.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                <span className="min-w-0 break-all text-sm font-medium text-ink-800">{d.domain_name}</span>
                 <Badge tone={d.status === "verified" ? "success" : d.status === "suspended" ? "danger" : "warning"}>
                   {d.status}
                 </Badge>
               </li>
             ))}
             {(domains ?? []).length === 0 && (
-              <li className="px-4 py-6 text-center text-sm text-ink-400">No domains added yet.</li>
+              <li className="px-4 py-6 text-center text-sm text-ink-500">No domains added yet.</li>
             )}
           </ul>
         </div>

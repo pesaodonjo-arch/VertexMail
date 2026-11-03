@@ -7,6 +7,7 @@ import { Menu, PenSquare, Shield, UserRound, X } from "lucide-react";
 import clsx from "clsx";
 import { folders } from "./folders";
 import { VertexMark } from "@/components/ui/VertexMark";
+import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { AccountSwitcher } from "@/components/accounts/AccountSwitcher";
 import { useNotifications } from "@/components/notifications/NotificationProvider";
 
@@ -134,7 +135,8 @@ export function MobileDrawer({ isAdmin, mailboxAddress, userId }: { isAdmin: boo
           )}
         </nav>
 
-        <div className="vx-safe-bottom border-t border-ink-100 px-4 py-3">
+        <div className="vx-safe-bottom space-y-2 border-t border-ink-100 px-4 py-3">
+          <ThemeSwitcher />
           <AccountSwitcher currentUserId={userId} currentLabel={mailboxAddress} />
         </div>
       </aside>

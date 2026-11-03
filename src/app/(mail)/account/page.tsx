@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { FolderHeader } from "@/components/mail/FolderHeader";
 import { AccountSwitcher } from "@/components/accounts/AccountSwitcher";
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
+import { AppearanceCard } from "@/components/theme/AppearanceCard";
 import { ChangePasswordCard } from "@/components/accounts/ChangePasswordCard";
 
 export const dynamic = "force-dynamic";
@@ -25,10 +26,12 @@ export default async function AccountPage() {
       <FolderHeader title="Account" />
       <div className="vx-scroll flex-1 space-y-4 overflow-y-auto px-4 py-4">
         <div className="rounded-xl border border-ink-200 bg-white p-4 shadow-panel">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-400">Signed in as</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-500">Signed in as</p>
           <p className="mt-1 text-base font-semibold text-ink-900">{address}</p>
           {mailbox?.display_name && <p className="text-sm text-ink-500">{mailbox.display_name}</p>}
         </div>
+
+        <AppearanceCard />
 
         <NotificationSettings />
 
