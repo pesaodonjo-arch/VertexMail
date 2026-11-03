@@ -5,35 +5,40 @@ import type { Config } from "tailwindcss";
 // verified/success/unread states. Deep navy for chrome (sidebars, admin
 // nav) instead of pure black. Kept out of the cream/terracotta and
 // pure-black/neon defaults.
+// Palette lives in CSS variables (see globals.css) so the whole UI can switch
+// between light and dark. `<alpha-value>` keeps opacity modifiers like bg-brand-600/30 working.
+const v = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
+
 const config: Config = {
+  darkMode: "class",
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
         brand: {
-          50: "#EEF2FF",
-          100: "#E0E7FF",
-          200: "#C7D2FE",
-          300: "#A5B4FC",
-          400: "#818CF8",
-          500: "#4F5FE0",
-          600: "#2952E3", // primary
-          700: "#2140B8",
-          800: "#1B3391",
-          900: "#182B72",
+          50: v("brand-50"),
+          100: v("brand-100"),
+          200: v("brand-200"),
+          300: v("brand-300"),
+          400: v("brand-400"),
+          500: v("brand-500"),
+          600: v("brand-600"),
+          700: v("brand-700"),
+          800: v("brand-800"),
+          900: v("brand-900"),
         },
         ink: {
-          50: "#F7F8FB",
-          100: "#EEF0F6",
-          200: "#E4E7EE",
-          300: "#CBD0DC",
-          400: "#9AA1B4",
-          500: "#6B7280",
-          600: "#4B5165",
-          700: "#343A4D",
-          800: "#20243333",
-          900: "#12172B", // near-black navy, used for headline text
-          950: "#0B0F1F", // sidebar / dark chrome
+          50: v("ink-50"),
+          100: v("ink-100"),
+          200: v("ink-200"),
+          300: v("ink-300"),
+          400: v("ink-400"),
+          500: v("ink-500"),
+          600: v("ink-600"),
+          700: v("ink-700"),
+          800: v("ink-800"),
+          900: v("ink-900"),
+          950: v("ink-950"),
         },
         accent: {
           teal: "#17B897",
