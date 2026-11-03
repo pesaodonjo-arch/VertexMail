@@ -9,7 +9,21 @@ import { getNotifyState, registerServiceWorker, senderName, showSystemNotificati
 
 interface Toast { id: string; title: string; body: string; href: string }
 
-const NotificationContext = createContext<{ unread: number }>({ unread: 0 });
+interface NotificationContextValue {
+  unread: number;
+  /** Re-check unread count and re-fetch the current page's data from the server. */
+  refresh: () => Promise<void>;
+  refreshing: boolean;
+  /** Full reload: drops Realtime connection + in-memory state and reloads the app. */
+  restartApp: () => Promise<void>;
+}
+
+const NotificationContext = createContext<NotificationContextValue>({
+  unread: 0,
+  refresh: async () => {},
+  refreshing: false,
+  restartApp: async () => {},
+});
 export const useNotifications = () => useContext(NotificationContext);
 
 const POLL_MS = 45_000;
@@ -38,6 +52,7 @@ export function NotificationProvider({
 
   const [unread, setUnreadState] = useState(initialUnread);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const unreadRef = useRef(initialUnread);
   const pathRef = useRef(pathname);
   const lastRealtimeAt = useRef(0);
@@ -79,9 +94,40 @@ export function NotificationProvider({
         announce("New mail", gained === 1 ? "You have a new message" : `You have ${gained} new messages`, "/inbox");
       }
       setUnread(count);
+      // Polling found new mail that Realtime missed — also refresh the list itself,
+      // not just the badge, so it shows up without a manual refresh.
+      if (gained > 0 && (pathRef.current.startsWith("/inbox") || pathRef.current.startsWith("/thread"))) {
+        router.refresh();
+      }
     },
-    [supabase, announce, setUnread]
+    [supabase, announce, setUnread, router]
   );
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await recount(true);
+      router.refresh();
+    } finally {
+      // router.refresh() returns immediately; keep the spinner visible briefly.
+      setTimeout(() => setRefreshing(false), 800);
+    }
+  }, [recount, router]);
+
+  const restartApp = useCallback(async () => {
+    try {
+      void supabase.removeAllChannels();
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+      const reg = await navigator.serviceWorker?.getRegistration();
+      await reg?.update();
+    } catch {
+      /* best effort — reload regardless */
+    }
+    window.location.reload();
+  }, [supabase]);
 
   // Live updates + polling fallback.
   useEffect(() => {
@@ -120,7 +166,12 @@ export function NotificationProvider({
       .subscribe();
 
     const poll = setInterval(() => void recount(true), POLL_MS);
-    const onVisible = () => { if (document.visibilityState === "visible") void recount(false); };
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      void recount(false);
+      // Coming back to the app (e.g. resuming the Android app): pull fresh data.
+      if (pathRef.current.startsWith("/inbox")) router.refresh();
+    };
     document.addEventListener("visibilitychange", onVisible);
 
     return () => {
@@ -150,7 +201,7 @@ export function NotificationProvider({
   }, [unread, pathname]);
 
   return (
-    <NotificationContext.Provider value={{ unread }}>
+    <NotificationContext.Provider value={{ unread, refresh, refreshing, restartApp }}>
       {children}
       <div
         aria-live="polite"

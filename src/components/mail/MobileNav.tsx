@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, PenSquare, Shield, UserRound, X } from "lucide-react";
+import { Menu, PenSquare, Power, Shield, UserRound, X } from "lucide-react";
 import clsx from "clsx";
 import { folders } from "./folders";
 import { VertexMark } from "@/components/ui/VertexMark";
@@ -40,7 +40,7 @@ export function MenuButton() {
 export function MobileDrawer({ isAdmin, mailboxAddress, userId }: { isAdmin: boolean; mailboxAddress: string; userId: string }) {
   const { open, setOpen } = useMobileNav();
   const pathname = usePathname();
-  const { unread } = useNotifications();
+  const { unread, restartApp } = useNotifications();
   const touchStartX = useRef<number | null>(null);
 
   // Close after navigating.
@@ -133,6 +133,9 @@ export function MobileDrawer({ isAdmin, mailboxAddress, userId }: { isAdmin: boo
               <Shield size={20} /> Switch to Admin
             </Link>
           )}
+          <button type="button" onClick={() => void restartApp()} className={clsx(linkClass(false), "w-[calc(100%-0.75rem)] text-left")}>
+            <Power size={20} /> Restart app
+          </button>
         </nav>
 
         <div className="vx-safe-bottom space-y-2 border-t border-ink-100 px-4 py-3">
